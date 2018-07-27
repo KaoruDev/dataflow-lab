@@ -61,7 +61,13 @@ public class ImagesPipeline1 {
 			String fileName = "image.jpeg";
 
 			Instant timestamp = Instant.now();
-			String pathToFileOut = BUCKET_OUT_PATH +"/" + label + "/" + timestamp.toString() + rotation + fileName;
+			String pathToFileOut = String.format("%s/%s/%s-%s-%s",
+				BUCKET_OUT_PATH,
+				label,
+				timestamp,
+				rotation,
+				fileName
+			);
 
 			ReadableByteChannel rChan;
 			try {
@@ -70,60 +76,6 @@ public class ImagesPipeline1 {
 					BufferedImage buffImg = ImageIO.read(stream);
 					buffImg = Scalr.rotate(buffImg, rotation);
 
-					ByteArrayOutputStream bos = new ByteArrayOutputStream();
-					ImageIO.write(buffImg, "jpeg", bos);
-
-					try (ByteArrayInputStream in = new ByteArrayInputStream(bos.toByteArray());
-						 ReadableByteChannel readerChannel = Channels.newChannel(in);
-						 WritableByteChannel writerChannel = FileSystems.create(FileSystems.matchNewResource(pathToFileOut, false ), "image/jpg")) {
-
-						ByteStreams.copy(readerChannel, writerChannel);
-					}
-					catch(IOException ioex) {
-						// TODO Auto-generated catch block
-						ioex.printStackTrace();
-					}
-				}
-				catch (IOException ioe) {
-					// TODO Auto-generated catch block
-					ioe.printStackTrace();
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-
-	}
-
-	public static class FlipImages extends DoFn<PubsubMessage, String>{
-
-		FlipImages() {}
-
-		@ProcessElement
-		public void processElement(ProcessContext c) {
-			String msg = new String(c.element().getPayload());
-			JSONObject msgJson = new JSONObject(msg);
-
-			//	String label = msg.substring(msg.indexOf(",")+1, msg.length());
-			String label = msgJson.getString("label");
-			label = label.trim().toLowerCase();
-
-			//    String fileName = msg.substring(0,msg.indexOf(","));
-			//String pathToFileIn = BUCKET_IN_PATH +"/" + fileName;
-			String pathToFileIn = msgJson.getString("filePath");
-
-			String fileName = "image.jpeg"; //UUID.randomUUID().toString();;
-
-			Instant timestamp = Instant.now();
-			String pathToFileOut = BUCKET_OUT_PATH +"/" + label + "/" + timestamp.toString() + "-flipV-" + fileName;
-
-			ReadableByteChannel rChan;
-			try {
-				rChan = FileSystems.open(FileSystems.matchNewResource(pathToFileIn, false ));
-				try (InputStream stream = Channels.newInputStream(rChan)) {
-					BufferedImage buffImg = ImageIO.read(stream);
-					buffImg = Scalr.rotate(buffImg, Rotation.FLIP_VERT);
 					ByteArrayOutputStream bos = new ByteArrayOutputStream();
 					ImageIO.write(buffImg, "jpeg", bos);
 
@@ -255,7 +207,7 @@ public class ImagesPipeline1 {
 		pCollection.apply("copy", ParDo.of(new CopyImages()));
 		pCollection.apply("rotate90", ParDo.of(new RotateImages(Rotation.CW_90)));
 		pCollection.apply("rotate270", ParDo.of(new RotateImages(Rotation.CW_270)));
-		pCollection.apply("flip image", ParDo.of(new FlipImages()));
+		pCollection.apply("flip image", ParDo.of(new RotateImages(Rotation.FLIP_VERT)));
 		pCollection.apply("gray image", ParDo.of(new GrayImages()));
 
 		// Run the pipeline
