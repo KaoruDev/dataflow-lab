@@ -28,6 +28,8 @@ import javax.imageio.ImageIO;
 import org.imgscalr.Scalr;
 import org.imgscalr.Scalr.Rotation;
 import java.awt.image.BufferedImage;
+import java.util.Random;
+
 import org.json.*;
 
 
@@ -68,6 +70,8 @@ public class ImagesPipeline1 {
 				rotation,
 				fileName
 			);
+
+			throwRandomException();
 
 			ReadableByteChannel rChan;
 			try {
@@ -187,6 +191,12 @@ public class ImagesPipeline1 {
 			c.output(fileName);
 	    }
 
+	}
+
+	public static void throwRandomException() {
+		if (new Random().nextInt() * 100 > 50) {
+			throw new RuntimeException("foobar");
+		}
 	}
 
 
