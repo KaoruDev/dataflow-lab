@@ -61,7 +61,7 @@ public class ImagesPipeline1 {
 			String fileName = "image.jpeg";
 
 			Instant timestamp = Instant.now();
-			String pathToFileOut = BUCKET_OUT_PATH +"/" + label + "/" + timestamp.toString() + "-rot90-" + fileName;
+			String pathToFileOut = BUCKET_OUT_PATH +"/" + label + "/" + timestamp.toString() + rotation + fileName;
 
 			ReadableByteChannel rChan;
 			try {
